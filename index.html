@@ -206,7 +206,7 @@
 <script>
 const TUNE_KEY='d14abe87ccb72d1cd1880def1736f2cff8a4c1b7ea80314d328534d1f168847b',TUNE_NET='atlasvpn',PROXY='https://yellow-cell-9435wix-proxy.nico-b33.workers.dev';
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return Math.abs(h).toString(16).padStart(8,'0');}
-const PW_OK=hashStr('technovice2024'),SK='tn_v3';
+const PW_OK=hashStr('No*MwF.c96GocnPrVD.pA_i6ZctpGirsLy76Q7b3E_vj9_HvzTRcKMf.JWji'),SK='tn_v3';
 function checkPw(){const v=document.getElementById('pwInput').value;if(hashStr(v)===PW_OK){sessionStorage.setItem(SK,PW_OK);unlock();}else{const i=document.getElementById('pwInput');i.classList.remove('shake');void i.offsetWidth;i.classList.add('shake');document.getElementById('loginError').textContent='Falsches Passwort.';i.value='';}}
 function unlock(){document.getElementById('loginScreen').style.display='none';document.getElementById('dashboard').style.display='block';loadSaily();loadWix();}
 if(sessionStorage.getItem(SK)===PW_OK)unlock();
