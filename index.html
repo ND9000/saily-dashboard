@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechNovice · Business Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1D9E75; --green-light: #E1F5EE; --green-dark: #0F6E56;
+      --blue: #378ADD; --blue-light: #E6F1FB;
+      --amber: #BA7517; --amber-light: #FAEEDA;
+      --coral: #D85A30; --coral-light: #FAECE7;
+      --text: #1a1a18; --text-2: #5F5E5A; --text-3: #888780;
+      --bg: #F8F7F4; --bg-2: #EEEDEA; --bg-card: #ffffff;
+      --border: rgba(0,0,0,0.09);
+      --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f0efe8; --text-2: #B4B2A9; --text-3: #888780;
+        --bg: #161614; --bg-2: #1e1e1c; --bg-card: #252523;
+        --border: rgba(255,255,255,0.08);
+      }
+    }
+
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* LOGIN */
+    #loginScreen {
+      position: fixed; inset: 0; background: #0c1510;
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .login-box {
+      background: #162018; border: 1px solid rgba(29,158,117,0.25);
+      border-radius: 18px; padding: 2.5rem 2rem; width: 340px;
+      display: flex; flex-direction: column; gap: 1.1rem;
+    }
+    .login-logo { width: 42px; height: 42px; border-radius: 10px; background: var(--green); display: flex; align-items: center; justify-content: center; }
+    .login-logo svg { width: 20px; height: 20px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .login-title { font-size: 17px; font-weight: 600; color: #f0efe8; }
+    .login-sub { font-size: 12px; color: #5F5E5A; margin-top: -0.5rem; }
+    .login-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #9FE1CB; margin-bottom: 5px; }
+    .login-input {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid rgba(29,158,117,0.25); background: rgba(29,158,117,0.06);
+      color: #f0efe8; font-size: 14px; font-family: 'DM Mono', monospace;
+      outline: none; letter-spacing: .1em; transition: border-color .15s;
+    }
+    .login-input:focus { border-color: var(--green); }
+    .login-input.shake { animation: shake .3s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    .login-btn { width: 100%; padding: 11px; border-radius: 8px; background: var(--green); border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; }
+    .login-btn:hover { background: var(--green-dark); }
+    .login-error { font-size: 12px; color: #D85A30; text-align: center; min-height: 14px; }
+    .login-hint { font-size: 11px; color: #333; text-align: center; }
+
+    /* TOPBAR */
+    #dashboard { display: none; }
+    .topbar {
+      background: var(--bg-card); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 54px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .t-logo { width: 30px; height: 30px; border-radius: 7px; background: var(--green); display: flex; align-items: center; justify-content: center; }
+    .t-logo svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .t-name { font-size: 14px; font-weight: 600; }
+    .t-sub { font-size: 12px; color: var(--text-3); margin-left: 2px; }
+    .live-badge { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 4px 11px; border-radius: 20px; background: var(--green-light); color: var(--green-dark); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* MAIN */
+    .main { max-width: 1120px; margin: 0 auto; padding: 1.75rem 1.5rem; }
+
+    /* SECTION HEADERS */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+    .section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); display: flex; align-items: center; gap: 8px; }
+    .section-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--blue); }
+    .range-pills { display: flex; gap: 4px; }
+    .rpill { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; color: var(--text-2); background: var(--bg-card); font-family: inherit; font-weight: 500; transition: all .15s; }
+    .rpill:hover { border-color: var(--green); color: var(--green); }
+    .rpill.active { background: var(--green); color: white; border-color: var(--green); }
+    .rpill.active-blue { background: var(--blue); color: white; border-color: var(--blue); }
+
+    /* STATUS */
+    .status-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 14px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+    .s-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .s-green { background: var(--green); }
+    .s-loading { background: #EF9F27; animation: pulse .8s ease-in-out infinite; }
+    .s-error { background: #D85A30; }
+    .s-text { flex: 1; }
+    .s-text strong { color: var(--text); }
+    .refresh-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-2); cursor: pointer; font-family: inherit; transition: all .15s; }
+    .refresh-btn:hover { color: var(--green); border-color: var(--green); }
+
+    /* METRICS */
+    .metrics { display: grid; gap: 10px; margin-bottom: 1.25rem; }
+    .metrics-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .metrics-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    @media (max-width: 700px) { .metrics-4, .metrics-3 { grid-template-columns: repeat(2,1fr); } }
+    .metric { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 1rem 1.1rem; }
+    .m-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin-bottom: 6px; font-weight: 500; }
+    .m-val { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.1; }
+    .m-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    /* CHARTS */
+    .charts-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-md); padding: 1.1rem 1.25rem; margin-bottom: 12px; }
+    .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin-bottom: .9rem; }
+    .legend { display: flex; gap: 14px; margin-bottom: 10px; font-size: 11px; color: var(--text-2); flex-wrap: wrap; }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+    .leg-sq { width: 9px; height: 9px; border-radius: 2px; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th.r { text-align: right; }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+    td.r { text-align: right; font-family: 'DM Mono', monospace; font-size: 11px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-2); }
+
+    .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 500; }
+    .b-green { background: var(--green-light); color: var(--green-dark); }
+    .b-amber { background: var(--amber-light); color: var(--amber); }
+    .b-blue { background: var(--blue-light); color: var(--blue); }
+
+    .divider { height: 1px; background: var(--border); margin: 2rem 0; }
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer { text-align: center; font-size: 11px; color: var(--text-3); padding: 1.5rem 0; border-top: 1px solid var(--border); margin-top: 1rem; }
+    .footer a { color: var(--green); text-decoration: none; }
+
+    .error-note { font-size: 12px; color: var(--text-2); padding: .75rem; background: var(--bg-2); border-radius: var(--r-sm); }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+    </div>
+    <div class="login-title">TechNovice Dashboard</div>
+    <div class="login-sub">Saily Affiliate · Website Analytics</div>
+    <div>
+      <div class="login-label">Passwort</div>
+      <input type="password" id="pwInput" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    </div>
+    <button class="login-btn" onclick="checkPw()">Anmelden →</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-hint">Privates Dashboard · TechNovice</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="t-logo"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <span class="t-name">TechNovice</span>
+      <span class="t-sub">· Business Dashboard</span>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div> Live</div>
+  </nav>
+
+  <main class="main">
+
+    <!-- ── SAILY AFFILIATE ── -->
+    <div class="section-header">
+      <div class="section-title"><span class="section-dot dot-green"></span> Saily Affiliate · Tune API</div>
+      <div class="range-pills">
+        <button class="rpill" onclick="setSailyRange(7,this)">7T</button>
+        <button class="rpill active" onclick="setSailyRange(30,this)">30T</button>
+        <button class="rpill" onclick="setSailyRange(90,this)">90T</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="s-dot s-loading" id="sailyDot"></div>
+      <div class="s-text" id="sailyStatus">Verbinde mit Tune API…</div>
+      <button class="refresh-btn" onclick="loadSaily()">↺ Reload</button>
+    </div>
+
+    <div class="metrics metrics-4" style="margin-bottom:1.25rem">
+      <div class="metric"><div class="m-label">Klicks</div><div class="m-val" id="s-clicks">–</div><div class="m-sub" id="s-clicks-sub"></div></div>
+      <div class="metric"><div class="m-label">Conversions</div><div class="m-val" id="s-conv">–</div><div class="m-sub" id="s-conv-sub"></div></div>
+      <div class="metric"><div class="m-label">Payout</div><div class="m-val" id="s-pay">–</div><div class="m-sub" id="s-pay-sub"></div></div>
+      <div class="metric"><div class="m-label">Ø CHF / Conv.</div><div class="m-val" id="s-cpa">–</div><div class="m-sub" id="s-cpa-sub"></div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">Conversions & Payout – Verlauf</div>
+        <div class="legend">
+          <span><span class="leg-sq" style="background:#1D9E75"></span>Conversions</span>
+          <span><span class="leg-sq" style="background:#378ADD;opacity:.8"></span>Payout (CHF)</span>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="sailyLine" role="img" aria-label="Saily Verlauf"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Payout nach Woche</div>
+        <div style="position:relative;height:232px"><canvas id="sailyBar" role="img" aria-label="Saily Wochenpayout"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tages-Breakdown · Saily</div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Datum</th><th class="r">Klicks</th><th class="r">Conv.</th><th class="r">Payout</th><th class="r">CHF/Conv.</th><th>Status</th></tr></thead>
+        <tbody id="sailyTable"><tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-3)"><span class="spinner"></span></td></tr></tbody>
+      </table></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── WIX ANALYTICS ── -->
+    <div class="section-header">
+      <div class="section-title"><span class="section-dot dot-blue"></span> TechNovice · Wix Analytics</div>
+      <div class="range-pills">
+        <button class="rpill active-blue" onclick="setWixRange(30,this)" id="wixPill30">30T</button>
+        <button class="rpill" onclick="setWixRange(60,this)" id="wixPill60">60T</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="s-dot s-loading" id="wixDot"></div>
+      <div class="s-text" id="wixStatus">Verbinde mit Wix Analytics API…</div>
+      <button class="refresh-btn" onclick="loadWix()">↺ Reload</button>
+    </div>
+
+    <div class="metrics metrics-3" style="margin-bottom:1.25rem">
+      <div class="metric"><div class="m-label">Sessions (Besuche)</div><div class="m-val" id="w-sessions">–</div><div class="m-sub" id="w-sessions-sub"></div></div>
+      <div class="metric"><div class="m-label">Unique Visitors</div><div class="m-val" id="w-visitors">–</div><div class="m-sub" id="w-visitors-sub"></div></div>
+      <div class="metric"><div class="m-label">Formular-Einreichungen</div><div class="m-val" id="w-forms">–</div><div class="m-sub" id="w-forms-sub"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Sessions & Unique Visitors – Verlauf</div>
+      <div class="legend">
+        <span><span class="leg-sq" style="background:#378ADD"></span>Sessions</span>
+        <span><span class="leg-sq" style="background:#1D9E75;opacity:.8"></span>Unique Visitors</span>
+      </div>
+      <div style="position:relative;height:200px"><canvas id="wixLine" role="img" aria-label="Wix Analytics Verlauf"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tages-Breakdown · TechNovice</div>
+      <div id="wixTableWrap" style="overflow-x:auto">
+        <div style="text-align:center;padding:1.5rem;color:var(--text-3)"><span class="spinner"></span></div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      TechNovice Business Dashboard · <a href="https://technovice.net" target="_blank">technovice.net</a> ·
+      Saily Rabattcode: <strong>technovice</strong> (10% auf alle Datenpakete)
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const TUNE_KEY    = 'd14abe87ccb72d1cd1880def1736f2cff8a4c1b7ea80314d328534d1f168847b';
+const TUNE_NET    = 'atlasvpn';
+const WIX_TOKEN   = 'IST.eyJraWQiOiJQb3pIX2FDMiIsImFsZyI6IlJTMjU2In0.eyJkYXRhIjoie1wiaWRcIjpcIjgwOGI2NTQ0LTMxMDAtNDI5OC04NjExLWI0YTE2MzNiMWY3NVwiLFwiaWRlbnRpdHlcIjp7XCJ0eXBlXCI6XCJhcHBsaWNhdGlvblwiLFwiaWRcIjpcImYwYjMxMDc5LTcyM2EtNGM5ZS1hNjE1LWRjY2M1ZWU2NDg0OVwifSxcInRlbmFudFwiOntcInR5cGVcIjpcImFjY291bnRcIixcImlkXCI6XCI3MWUzYjk0MC1lMTc1LTQ0MjMtYmFiMy1mNjNkYzRhMGUyZjRcIn19IiwiaWF0IjoxNzc5MDA4Njc4fQ.i2HwcK-OaDjB9RcNFhFoxfnYx7PAage43RCHVRjZqd2YVFRklnx7VBhixwhlkrJjJt3wiayPCPMi5r0lWUMl2MJs8yMoiaDAUmBL4wSp21PCRkkS2P3qeChw7MXDKHqXJcPGZ50NpIk1GVXwFbS2ucMXFhuEIl6-urw85J8H3UxJKDCESsiPu6mV5tZ09jI3j8wm-_v2MYY_8dnWqqtuX6RusbCwqA2LkzGaHhMKCxyqcLMks5XcXceQ4kAIqX4Y43OZmy9cNLFizDIxrchDBRcU6cLXpn0xEobE_J7vBK_AjZPs6wYudJ9ht3y_UkLj8nMHuPJokZqo57JGAZerIg';
+const WIX_SITE   = '1982dfd8-5231-46f8-b505-ab3b786b412a';
+const PW_CORRECT = hashStr('technovice2024');
+const SESSION_KEY = 'tn_auth_v2';
+
+// ── AUTH ─────────────────────────────────────────────────────────
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+  return Math.abs(h).toString(16).padStart(8,'0');
+}
+function checkPw() {
+  const val = document.getElementById('pwInput').value;
+  if (hashStr(val) === PW_CORRECT) {
+    sessionStorage.setItem(SESSION_KEY, PW_CORRECT);
+    unlock();
+  } else {
+    const inp = document.getElementById('pwInput');
+    inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+    document.getElementById('loginError').textContent = 'Falsches Passwort.';
+    inp.value = '';
+  }
+}
+function unlock() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadSaily(); loadWix();
+}
+if (sessionStorage.getItem(SESSION_KEY) === PW_CORRECT) unlock();
+
+// ── HELPERS ──────────────────────────────────────────────────────
+const DAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+function getRange(n) {
+  const end = new Date(), start = new Date();
+  start.setDate(end.getDate() - n + 1);
+  const fmt = d => d.toISOString().split('T')[0];
+  return { start: fmt(start), end: fmt(end) };
+}
+function fmtD(iso) { const [y,m,d]=iso.split('-'); return `${d}.${m}.${y.slice(2)}`; }
+function fmtCHF(n) { return 'CHF '+Number(n).toFixed(2); }
+function fmtN(n) { return Number(n).toLocaleString('de-CH'); }
+function weekNum(iso) {
+  const d = new Date(iso); d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w1 = new Date(d.getFullYear(),0,4);
+  return 'KW'+(1+Math.round(((d-w1)/86400000-3+(w1.getDay()+6)%7)/7));
+}
+
+// ── SAILY / TUNE ─────────────────────────────────────────────────
+let sailyDays = 30, sailyLineChart, sailyBarChart;
+
+function setSailyRange(d, el) {
+  sailyDays = d;
+  document.querySelectorAll('.range-pills:first-of-type .rpill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  loadSaily();
+}
+
+async function loadSaily() {
+  const {start,end} = getRange(sailyDays);
+  setStatus('saily','loading',`Lade Tune Daten ${start} – ${end}…`);
+  const url = `https://${TUNE_NET}.api.hasoffers.com/Apiv3/json?Target=Affiliate_Report&Method=getStats&api_key=${TUNE_KEY}&fields[]=Stat.date&fields[]=Stat.clicks&fields[]=Stat.conversions&fields[]=Stat.payout&filters[Stat.date][conditional]=BETWEEN&filters[Stat.date][values][]=${start}&filters[Stat.date][values][]=${end}&sort[Stat.date]=ASC&totals=1&limit=200`;
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json?.response?.status !== 1) throw new Error(json?.response?.errorMessage||'API-Fehler');
+    const rows = (json.response.data.data||[]).map(r=>r.Stat||r);
+    const tot = json.response.data.totals?.Stat||{};
+    renderSailyMetrics(rows, tot);
+    renderSailyCharts(rows);
+    renderSailyTable(rows);
+    setStatus('saily','ok',`<strong>Tune API</strong> · ${rows.length} Tage · ${start} – ${end}`);
+  } catch(e) {
+    setStatus('saily','error',`Tune Fehler: ${e.message}`);
+  }
+}
+
+function renderSailyMetrics(rows, tot) {
+  const n = rows.length||1;
+  const clicks=parseInt(tot.clicks||0), conv=parseInt(tot.conversions||0), pay=parseFloat(tot.payout||0);
+  set('s-clicks', fmtN(clicks)); set('s-clicks-sub',`⌀ ${(clicks/n).toFixed(1)}/Tag`);
+  set('s-conv', fmtN(conv)); set('s-conv-sub',`⌀ ${(conv/n).toFixed(1)}/Tag`);
+  set('s-pay', fmtCHF(pay)); set('s-pay-sub',`⌀ ${fmtCHF(pay/n)}/Tag`);
+  set('s-cpa', conv>0?fmtCHF(pay/conv):'–'); set('s-cpa-sub',`${conv} Conv. total`);
+}
+
+function renderSailyCharts(rows) {
+  if (sailyLineChart) sailyLineChart.destroy();
+  if (sailyBarChart) sailyBarChart.destroy();
+  const labels=rows.map(r=>fmtD(r.date||r['Stat.date']||''));
+  const convs=rows.map(r=>parseInt(r.conversions||r['Stat.conversions']||0));
+  const pays=rows.map(r=>parseFloat(r.payout||r['Stat.payout']||0).toFixed(2));
+  sailyLineChart = mkLine('sailyLine', labels,
+    [{label:'Conversions',data:convs,color:'#1D9E75',dash:false,axis:'y'},
+     {label:'Payout',data:pays,color:'#378ADD',dash:true,axis:'y1'}]);
+  const wm={};
+  rows.forEach(r=>{const w=weekNum(r.date||r['Stat.date']||'2026-01-01');wm[w]=(wm[w]||0)+parseFloat(r.payout||0);});
+  const wk=Object.keys(wm), wv=Object.values(wm).map(v=>+v.toFixed(2)), mx=Math.max(...wv);
+  sailyBarChart = mkBar('sailyBar', wk, wv, mx);
+}
+
+function renderSailyTable(rows) {
+  const mx=Math.max(...rows.map(r=>parseFloat(r.payout||r['Stat.payout']||0)));
+  document.getElementById('sailyTable').innerHTML=[...rows].reverse().map(r=>{
+    const pay=parseFloat(r.payout||r['Stat.payout']||0);
+    const conv=parseInt(r.conversions||r['Stat.conversions']||0);
+    const date=r.date||r['Stat.date']||'';
+    const clicks=parseInt(r.clicks||r['Stat.clicks']||0);
+    return `<tr>
+      <td><strong>${fmtD(date)}</strong> <span style="color:var(--text-3);font-size:11px">${date?DAYS[new Date(date).getDay()]:''}</span></td>
+      <td class="r">${clicks}</td><td class="r">${conv}</td>
+      <td class="r" style="${pay===mx?'color:var(--green);font-weight:600':''}">${fmtCHF(pay)}${pay===mx?' ★':''}</td>
+      <td class="r">${conv>0?fmtCHF(pay/conv):'–'}</td>
+      <td><span class="badge ${conv>=5?'b-green':conv>0?'b-amber':'b-blue'}">${conv>=5?'Stark':conv>0?'Normal':'Kein Conv.'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── WIX ANALYTICS ────────────────────────────────────────────────
+let wixDays=30, wixLineChart;
+
+function setWixRange(d,el) {
+  wixDays=d;
+  document.querySelectorAll('#wixPill30,#wixPill60').forEach(p=>{p.classList.remove('active','active-blue');});
+  el.classList.add('active-blue');
+  loadWix();
+}
+
+async function loadWix() {
+  const {start,end} = getRange(wixDays);
+  setStatus('wix','loading',`Lade Wix Analytics ${start} – ${end}…`);
+  const url = `https://yellow-cell-9435wix-proxy.nico-b33.workers.dev/?start=${start}&end=${end}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP '+res.status+' – '+await res.text());
+    const json = await res.json();
+    renderWixMetrics(json.data||[]);
+    renderWixChart(json.data||[]);
+    renderWixTable(json.data||[]);
+    setStatus('wix','ok',`<strong>Wix Analytics</strong> · ${start} – ${end}`);
+  } catch(e) {
+    setStatus('wix','error',`Wix Fehler: ${e.message}`);
+    document.getElementById('wixTableWrap').innerHTML=`<div class="error-note">⚠️ ${e.message}<br><br>Falls CORS-Fehler: Wix API erlaubt keine direkten Browser-Anfragen. Die Daten werden beim nächsten Update über einen Proxy eingebunden.</div>`;
+  }
+}
+
+function getWixSeries(data, type) {
+  return (data.find(d=>d.type===type)||{}).values||[];
+}
+function getWixTotal(data, type) {
+  return (data.find(d=>d.type===type)||{}).total||0;
+}
+
+function renderWixMetrics(data) {
+  const sess=getWixTotal(data,'TOTAL_SESSIONS');
+  const vis=getWixTotal(data,'TOTAL_UNIQUE_VISITORS');
+  const forms=getWixTotal(data,'TOTAL_FORMS_SUBMITTED');
+  const n=wixDays;
+  set('w-sessions',fmtN(sess)); set('w-sessions-sub',`⌀ ${(sess/n).toFixed(1)}/Tag`);
+  set('w-visitors',fmtN(vis)); set('w-visitors-sub',`⌀ ${(vis/n).toFixed(1)}/Tag`);
+  set('w-forms',fmtN(forms)); set('w-forms-sub',`Total ${n} Tage`);
+}
+
+function renderWixChart(data) {
+  if (wixLineChart) wixLineChart.destroy();
+  const sv=getWixSeries(data,'TOTAL_SESSIONS');
+  const vv=getWixSeries(data,'TOTAL_UNIQUE_VISITORS');
+  const labels=sv.map(r=>fmtD(r.date));
+  wixLineChart = mkLine('wixLine', labels,
+    [{label:'Sessions',data:sv.map(r=>r.value),color:'#378ADD',dash:false,axis:'y'},
+     {label:'Unique Visitors',data:vv.map(r=>r.value),color:'#1D9E75',dash:true,axis:'y'}]);
+}
+
+function renderWixTable(data) {
+  const sv=getWixSeries(data,'TOTAL_SESSIONS');
+  const vv=getWixSeries(data,'TOTAL_UNIQUE_VISITORS');
+  const fv=getWixSeries(data,'TOTAL_FORMS_SUBMITTED');
+  if (!sv.length) { document.getElementById('wixTableWrap').innerHTML='<div class="error-note">Keine Daten verfügbar.</div>'; return; }
+  const rows=[...sv].reverse();
+  document.getElementById('wixTableWrap').innerHTML=`<table>
+    <thead><tr><th>Datum</th><th class="r">Sessions</th><th class="r">Unique Visitors</th><th class="r">Formulare</th></tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      const vis=(vv[sv.length-1-i]||{}).value||0;
+      const frm=(fv[sv.length-1-i]||{}).value||0;
+      return `<tr><td><strong>${fmtD(r.date)}</strong></td><td class="r">${fmtN(r.value)}</td><td class="r">${fmtN(vis)}</td><td class="r">${frm||'–'}</td></tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────────
+function mkLine(id, labels, datasets) {
+  return new Chart(document.getElementById(id), {
+    type:'line',
+    data:{ labels, datasets: datasets.map(d=>({
+      label:d.label, data:d.data, borderColor:d.color,
+      backgroundColor:d.color+'15', borderWidth:2, tension:0.35,
+      pointRadius:labels.length>60?0:2, fill:true,
+      borderDash:d.dash?[4,3]:[], yAxisID:d.axis
+    }))},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#888',maxTicksLimit:10,maxRotation:40,autoSkip:true},grid:{display:false}},
+        y:{ticks:{font:{size:10},color:'#888'},grid:{color:'rgba(128,128,128,0.08)'}},
+        y1:{position:'right',ticks:{font:{size:10},color:'#888'},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function mkBar(id, labels, vals, max) {
+  return new Chart(document.getElementById(id), {
+    type:'bar',
+    data:{ labels, datasets:[{label:'CHF',data:vals,backgroundColor:vals.map(v=>v===max?'#1D9E75':'#9FE1CB'),borderRadius:4}]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:10},color:'#888'},grid:{display:false}},
+        y:{ticks:{font:{size:10},color:'#888',callback:v=>'CHF '+v},grid:{color:'rgba(128,128,128,0.08)'}}
+      }
+    }
+  });
+}
+
+// ── UI HELPERS ───────────────────────────────────────────────────
+function set(id,val){const el=document.getElementById(id);if(el)el.innerHTML=val;}
+function setStatus(which,state,msg) {
+  const dot=document.getElementById(which+'Dot');
+  const txt=document.getElementById(which+'Status');
+  dot.className='s-dot '+(state==='ok'?'s-green':state==='error'?'s-error':'s-loading');
+  txt.innerHTML=msg;
+}
+</script>
+</body>
+</html>
