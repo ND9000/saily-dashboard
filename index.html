@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saily Affiliate Dashboard · TechNovice</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Login screen */
+    #loginScreen {
+      position: fixed; inset: 0; background: #0f1a15;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; flex-direction: column; gap: 0;
+    }
+    .login-box {
+      background: #1a2820; border: 1px solid rgba(29,158,117,0.2);
+      border-radius: 16px; padding: 2.5rem 2rem; width: 340px;
+      display: flex; flex-direction: column; gap: 1.25rem;
+    }
+    .login-logo {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: #1D9E75; display: flex; align-items: center; justify-content: center;
+      margin-bottom: .25rem;
+    }
+    .login-logo svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .login-title { font-size: 18px; font-weight: 600; color: #f0efe8; }
+    .login-sub { font-size: 13px; color: #5F5E5A; margin-top: -0.75rem; }
+    .login-label { font-size: 12px; font-weight: 500; color: #9FE1CB; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .login-input {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid rgba(29,158,117,0.3); background: rgba(29,158,117,0.06);
+      color: #f0efe8; font-size: 14px; font-family: 'DM Mono', monospace;
+      outline: none; transition: border-color 0.15s; letter-spacing: .1em;
+    }
+    .login-input:focus { border-color: #1D9E75; }
+    .login-input.shake { animation: shake .3s ease; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    .login-btn {
+      width: 100%; padding: 11px; border-radius: 8px;
+      background: #1D9E75; border: none; color: white;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: background 0.15s;
+    }
+    .login-btn:hover { background: #0F6E56; }
+    .login-error { font-size: 12px; color: #D85A30; text-align: center; min-height: 16px; }
+    .login-footer { font-size: 11px; color: #444441; text-align: center; margin-top: -.5rem; }
+    #dashboard { display: none; }
+
+    :root {
+      --green-50: #E1F5EE;
+      --green-100: #9FE1CB;
+      --green-400: #1D9E75;
+      --green-600: #0F6E56;
+      --green-800: #085041;
+      --blue-400: #378ADD;
+      --blue-600: #185FA5;
+      --amber-400: #BA7517;
+      --amber-50: #FAEEDA;
+      --gray-50: #F8F7F4;
+      --gray-100: #EEEDEA;
+      --gray-200: #D3D1C7;
+      --gray-500: #888780;
+      --gray-800: #2C2C2A;
+      --text-primary: #1a1a18;
+      --text-secondary: #5F5E5A;
+      --text-muted: #888780;
+      --border: rgba(0,0,0,0.1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --gray-50: #1e1e1c;
+        --gray-100: #252523;
+        --gray-200: #333330;
+        --text-primary: #f0efe8;
+        --text-secondary: #B4B2A9;
+        --text-muted: #888780;
+        --border: rgba(255,255,255,0.1);
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--gray-50);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* Top nav */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    @media (prefers-color-scheme: dark) {
+      .topbar { background: var(--gray-100); }
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 32px; height: 32px; border-radius: 8px; background: var(--green-400); display: flex; align-items: center; justify-content: center; }
+    .logo svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .brand-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .brand-sub { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+    .live-pill { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 20px; background: var(--green-50); color: var(--green-600); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-400); animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* Main layout */
+    .main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Date range controls */
+    .controls { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+    .controls-left h1 { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+    .controls-left p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+    .range-pills { display: flex; gap: 4px; }
+    .rpill { font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; color: var(--text-secondary); background: white; font-family: inherit; transition: all 0.15s; font-weight: 500; }
+    .rpill:hover { border-color: var(--green-400); color: var(--green-400); }
+    .rpill.active { background: var(--green-400); color: white; border-color: var(--green-400); }
+    @media (prefers-color-scheme: dark) { .rpill { background: var(--gray-100); } }
+
+    /* Status bar */
+    .status-bar { background: white; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
+    @media (prefers-color-scheme: dark) { .status-bar { background: var(--gray-100); } }
+    .status-icon { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); flex-shrink: 0; }
+    .status-icon.loading { background: #EF9F27; animation: pulse 0.8s ease-in-out infinite; }
+    .status-icon.error { background: #D85A30; }
+    .status-text { flex: 1; }
+    .status-text strong { color: var(--text-primary); }
+    .refresh-btn { font-size: 12px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: all 0.15s; }
+    .refresh-btn:hover { border-color: var(--green-400); color: var(--green-400); }
+
+    /* Metric cards */
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    @media (max-width: 700px) { .metrics { grid-template-columns: repeat(2,1fr); } }
+    .metric { background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.1rem 1.25rem; }
+    @media (prefers-color-scheme: dark) { .metric { background: var(--gray-100); } }
+    .metric-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+    .metric-value { font-size: 24px; font-weight: 600; color: var(--text-primary); line-height: 1; }
+    .metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+    .metric-trend { font-size: 12px; margin-top: 5px; font-weight: 500; }
+    .trend-up { color: var(--green-600); }
+    .trend-down { color: #993C1D; }
+
+    /* Charts */
+    .charts-grid { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; margin-bottom: 12px; }
+    @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+    .card { background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; }
+    @media (prefers-color-scheme: dark) { .card { background: var(--gray-100); } }
+    .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 1rem; }
+    .legend { display: flex; gap: 16px; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary); }
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .leg-sq { width: 10px; height: 10px; border-radius: 2px; }
+
+    /* Table */
+    .table-card { margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    th.r { text-align: right; }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text-primary); }
+    td.r { text-align: right; font-family: 'DM Mono', monospace; font-size: 12px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--gray-50); }
+    @media (prefers-color-scheme: dark) { tr:hover td { background: var(--gray-200); } }
+    .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+    .badge-green { background: var(--green-50); color: var(--green-600); }
+    .badge-amber { background: var(--amber-50); color: var(--amber-400); }
+    .best-day { color: var(--green-600); font-weight: 600; }
+
+    /* Footer */
+    .footer { text-align: center; font-size: 12px; color: var(--text-muted); padding: 2rem 0 1rem; border-top: 1px solid var(--border); margin-top: 1rem; }
+    .footer a { color: var(--green-400); text-decoration: none; }
+
+    /* Spinner */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--green-400); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* API URL display */
+    .api-url { background: var(--gray-100); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 1.5rem; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-secondary); word-break: break-all; line-height: 1.6; display: none; }
+    .api-url.visible { display: block; }
+    .api-url-label { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Screen -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div class="login-title">Saily Dashboard</div>
+      <div class="login-sub">TechNovice · Affiliate Analytics</div>
+      <div>
+        <div class="login-label">Passwort</div>
+        <input type="password" id="pwInput" class="login-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+      </div>
+      <button class="login-btn" onclick="checkPw()">Anmelden</button>
+      <div class="login-error" id="loginError"></div>
+      <div class="login-footer">Privates Dashboard · Nur für autorisierte Nutzer</div>
+    </div>
+  </div>
+
+  <!-- Dashboard (versteckt bis Login) -->
+  <div id="dashboard">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <span class="brand-name">Saily Affiliate</span>
+      <span class="brand-sub">· TechNovice</span>
+    </div>
+    <div class="live-pill"><div class="live-dot"></div> Live</div>
+  </nav>
+
+  <main class="main">
+    <div class="controls">
+      <div class="controls-left">
+        <h1>Affiliate Dashboard</h1>
+        <p id="dateLabel">Lade Daten…</p>
+      </div>
+      <div class="range-pills">
+        <button class="rpill" onclick="setRange(7,this)">7 Tage</button>
+        <button class="rpill active" onclick="setRange(30,this)">30 Tage</button>
+        <button class="rpill" onclick="setRange(90,this)">90 Tage</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-icon loading" id="statusDot"></div>
+      <div class="status-text" id="statusText">Verbinde mit Tune API…</div>
+      <button class="refresh-btn" onclick="load()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Aktualisieren
+      </button>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Klicks</div>
+        <div class="metric-value" id="m-clicks">–</div>
+        <div class="metric-sub" id="ms-clicks"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Conversions</div>
+        <div class="metric-value" id="m-conv">–</div>
+        <div class="metric-sub" id="ms-conv"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Payout gesamt</div>
+        <div class="metric-value" id="m-pay">–</div>
+        <div class="metric-sub" id="ms-pay"></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Ø CHF / Conv.</div>
+        <div class="metric-value" id="m-cpa">–</div>
+        <div class="metric-sub" id="ms-cpa"></div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">Conversions & Payout – Tagesverlauf</div>
+        <div class="legend">
+          <span><span class="leg-sq" style="background:#1D9E75"></span>Conversions</span>
+          <span><span class="leg-sq" style="background:#378ADD; opacity:.7"></span>Payout (CHF)</span>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="cLine" role="img" aria-label="Tagesverlauf Conversions und Payout"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Payout nach Woche</div>
+        <div style="position:relative;height:260px"><canvas id="cBar" role="img" aria-label="Wöchentlicher Payout"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card table-card">
+      <div class="card-title">Tages-Breakdown</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>Datum</th>
+            <th class="r">Klicks</th>
+            <th class="r">Conversions</th>
+            <th class="r">Payout</th>
+            <th class="r">CHF / Conv.</th>
+            <th>Tag</th>
+          </tr></thead>
+          <tbody id="tbody"><tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)"><span class="spinner"></span></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="api-url" id="apiUrlBox">
+      <div class="api-url-label">API Request URL</div>
+      <span id="apiUrlText"></span>
+    </div>
+
+    <footer class="footer">
+      Saily Affiliate Dashboard · <a href="https://technovice.net" target="_blank">TechNovice</a> ·
+      Daten via <a href="https://developers.tune.com/affiliate/" target="_blank">Tune Affiliate API</a> ·
+      Code: <strong>technovice</strong> (10% Rabatt bei Saily)
+    </footer>
+  </main>
+
+<script>
+  const API_KEY = 'd14abe87ccb72d1cd1880def1736f2cff8a4c1b7ea80314d328534d1f168847b';
+  const NETWORK = 'atlasvpn';
+  const WEEKDAYS = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  let days = 30, lineChart, barChart;
+
+  function getRange(n) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - n + 1);
+    const fmt = d => d.toISOString().split('T')[0];
+    return { start: fmt(start), end: fmt(end) };
+  }
+
+  function buildUrl(start, end) {
+    return `https://${NETWORK}.api.hasoffers.com/Apiv3/json?Target=Affiliate_Report&Method=getStats&api_key=${API_KEY}&fields[]=Stat.date&fields[]=Stat.clicks&fields[]=Stat.conversions&fields[]=Stat.payout&fields[]=Stat.ltr&filters[Stat.date][conditional]=BETWEEN&filters[Stat.date][values][]=${start}&filters[Stat.date][values][]=${end}&sort[Stat.date]=ASC&totals=1&limit=200`;
+  }
+
+  function setRange(n, el) {
+    days = n;
+    document.querySelectorAll('.rpill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    load();
+  }
+
+  function fmtDate(iso) {
+    const [y,m,d] = iso.split('-');
+    return `${d}.${m}.${y.slice(2)}`;
+  }
+
+  function fmtCHF(n) {
+    return 'CHF ' + Number(n).toFixed(2);
+  }
+
+  function getWeekNum(dateStr) {
+    const d = new Date(dateStr);
+    d.setHours(0,0,0,0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return 'KW' + (1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7));
+  }
+
+  function renderMetrics(rows, totals) {
+    const clicks = parseInt(totals.clicks || 0);
+    const conv = parseInt(totals.conversions || 0);
+    const pay = parseFloat(totals.payout || 0);
+    const cpa = conv > 0 ? pay / conv : 0;
+    const n = rows.length || 1;
+
+    document.getElementById('m-clicks').textContent = clicks.toLocaleString('de-CH');
+    document.getElementById('ms-clicks').textContent = `⌀ ${(clicks/n).toFixed(1)} / Tag`;
+    document.getElementById('m-conv').textContent = conv.toLocaleString('de-CH');
+    document.getElementById('ms-conv').textContent = `⌀ ${(conv/n).toFixed(1)} / Tag`;
+    document.getElementById('m-pay').textContent = fmtCHF(pay);
+    document.getElementById('ms-pay').textContent = `⌀ ${fmtCHF(pay/n)} / Tag`;
+    document.getElementById('m-cpa').textContent = fmtCHF(cpa);
+    document.getElementById('ms-cpa').textContent = `${conv} Conversions total`;
+  }
+
+  function renderCharts(rows) {
+    if (lineChart) lineChart.destroy();
+    if (barChart) barChart.destroy();
+
+    const labels = rows.map(r => fmtDate(r.date));
+    const convData = rows.map(r => parseInt(r.conversions));
+    const payData = rows.map(r => parseFloat(r.payout).toFixed(2));
+
+    lineChart = new Chart(document.getElementById('cLine'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label:'Conversions', data: convData, borderColor:'#1D9E75', backgroundColor:'rgba(29,158,117,0.08)', borderWidth:2, tension:0.35, pointRadius:rows.length > 60 ? 0 : 2, fill:true, yAxisID:'y' },
+          { label:'Payout', data: payData, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.05)', borderWidth:2, tension:0.35, pointRadius:rows.length > 60 ? 0 : 2, borderDash:[4,3], fill:true, yAxisID:'y1' }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ font:{size:10}, color:'#888', maxTicksLimit:10, maxRotation:40, autoSkip:true }, grid:{ display:false } },
+          y:{ ticks:{ font:{size:10}, color:'#1D9E75' }, grid:{ color:'rgba(128,128,128,0.08)' } },
+          y1:{ position:'right', ticks:{ font:{size:10}, color:'#378ADD', callback: v => 'CHF '+v }, grid:{ display:false } }
+        }
+      }
+    });
+
+    // Weekly bar
+    const weekMap = {};
+    rows.forEach(r => {
+      const wk = getWeekNum(r.date);
+      weekMap[wk] = (weekMap[wk] || 0) + parseFloat(r.payout);
+    });
+    const wKeys = Object.keys(weekMap);
+    const wVals = wKeys.map(k => parseFloat(weekMap[k].toFixed(2)));
+    const maxW = Math.max(...wVals);
+
+    barChart = new Chart(document.getElementById('cBar'), {
+      type:'bar',
+      data:{
+        labels: wKeys,
+        datasets:[{ label:'Payout (CHF)', data: wVals, backgroundColor: wVals.map(v => v === maxW ? '#1D9E75' : '#9FE1CB'), borderRadius:5 }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{
+          x:{ ticks:{ font:{size:11}, color:'#888' }, grid:{ display:false } },
+          y:{ ticks:{ font:{size:10}, color:'#888', callback: v => 'CHF '+v }, grid:{ color:'rgba(128,128,128,0.08)' } }
+        }
+      }
+    });
+  }
+
+  function renderTable(rows) {
+    const maxPay = Math.max(...rows.map(r => parseFloat(r.payout)));
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = [...rows].reverse().map(r => {
+      const pay = parseFloat(r.payout);
+      const conv = parseInt(r.conversions);
+      const cpa = conv > 0 ? fmtCHF(pay/conv) : '–';
+      const isBest = pay === maxPay;
+      const wd = WEEKDAYS[new Date(r.date).getDay()];
+      return `<tr>
+        <td><strong>${fmtDate(r.date)}</strong></td>
+        <td class="r">${r.clicks}</td>
+        <td class="r">${conv}</td>
+        <td class="r ${isBest?'best-day':''}">${fmtCHF(pay)}${isBest?' ★':''}</td>
+        <td class="r">${cpa}</td>
+        <td><span class="badge ${conv>=5?'badge-green':'badge-amber'}">${wd} ${conv>=5?'Stark':'Normal'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function load() {
+    const { start, end } = getRange(days);
+    const url = buildUrl(start, end);
+
+    document.getElementById('statusDot').className = 'status-icon loading';
+    document.getElementById('statusText').innerHTML = `Lade Daten <strong>${start}</strong> bis <strong>${end}</strong>…`;
+    document.getElementById('dateLabel').textContent = `${start} – ${end} · ${days} Tage`;
+    document.getElementById('apiUrlText').textContent = url;
+    document.getElementById('apiUrlBox').classList.add('visible');
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+
+      if (json?.response?.status !== 1) {
+        throw new Error(json?.response?.errorMessage || 'API-Fehler');
+      }
+
+      const data = json.response.data;
+      const rows = (data.data || []).map(r => r.Stat || r);
+      const totals = data.totals?.Stat || data.totals || {};
+
+      document.getElementById('statusDot').className = 'status-icon';
+      document.getElementById('statusText').innerHTML = `<strong>Live-Daten geladen</strong> · ${rows.length} Tage · Letzte Aktualisierung: ${new Date().toLocaleTimeString('de-CH')}`;
+
+      renderMetrics(rows, totals);
+      renderCharts(rows);
+      renderTable(rows);
+
+    } catch(e) {
+      document.getElementById('statusDot').className = 'status-icon error';
+      document.getElementById('statusText').innerHTML = `<strong>Fehler:</strong> ${e.message} – Prüfe API-Key oder CORS-Einstellungen.`;
+    }
+  }
+
+  load();
+
+  // ── Passwortschutz ──────────────────────────────────────────────
+  // Passwort hier ändern:
+  const PW_HASH = '9a0f66c0a0e1f72f8be8d8be3e0a9e5f6d2b3c4e5f6a7b8c9d0e1f2a3b4c5d6';
+
+  function hashStr(str) {
+    // Einfacher Hash für clientseitigen Schutz
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+    }
+    return Math.abs(h).toString(16).padStart(8,'0');
+  }
+
+  // Gespeichertes Login prüfen
+  const SESSION_KEY = 'saily_auth';
+  const CORRECT_HASH = hashStr('technovice2024');
+
+  function checkPw() {
+    const val = document.getElementById('pwInput').value;
+    if (hashStr(val) === CORRECT_HASH) {
+      sessionStorage.setItem(SESSION_KEY, CORRECT_HASH);
+      unlockDashboard();
+    } else {
+      const inp = document.getElementById('pwInput');
+      inp.classList.remove('shake');
+      void inp.offsetWidth;
+      inp.classList.add('shake');
+      document.getElementById('loginError').textContent = 'Falsches Passwort. Bitte erneut versuchen.';
+      inp.value = '';
+    }
+  }
+
+  function unlockDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    load();
+  }
+
+  // Beim Laden prüfen ob Session aktiv
+  if (sessionStorage.getItem(SESSION_KEY) === CORRECT_HASH) {
+    unlockDashboard();
+  }
+</script>
+  </div><!-- /dashboard -->
+
+</body>
+</html>
